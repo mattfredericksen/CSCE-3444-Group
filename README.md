@@ -19,4 +19,6 @@ Integrating with REST APIs provided by smart thermostat makers such as Nest and 
 RPi provides a REST interface via [Flask](https://flask.palletsprojects.com/en/1.1.x/quickstart/) (or [Django-REST](https://www.django-rest-framework.org/)) server to expose measurement data, but does not store the data in a TSDB. Optionally, it may store data in a deque until fetched.  App will provide TSDB ([Prometheus](https://prometheus.io/docs/introduction/overview/)? [Graphite](https://graphite.readthedocs.io/en/stable/overview.html)?) insertion.  
 
 **Statistics for web app**  
-The purpose of the web application will be primarily to view useful statistics over an arbitrary range (perhaps disjoint, e.g. last 3 summers). It should also allow configuring alert trigger thresholds. Useful statistics include: average daily runtime, count of on-off cycles, average temperature differential, daily temperature differential variance, average air pressure, and more.
+The purpose of the web application will be primarily to view useful statistics over an arbitrary range (perhaps disjoint, e.g. last 3 summers). It should also allow configuring alert trigger thresholds. Useful statistics include: average daily runtime, count of on-off cycles, average temperature differential, daily temperature differential variance, average air pressure, [weather data](https://openweathermap.org/price), and more.
+
+
