@@ -1,5 +1,7 @@
 # The Official Group
 
+![Image of Gantt Chart](schedule.jpg)
+
 ### Project Proposal (WIP)
 **Purpose:** to expose health and usage information of residential air-conditions systems to predict maintenance and failure
 
