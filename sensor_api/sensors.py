@@ -14,30 +14,30 @@ class Sensor:
 
 class TemperatureSensor(Sensor):
     def read(self):
-        # research in progress for connecting sensors RPi
+        # research in progress for connecting sensors to RPi
         pass
 
 
 class PressureSensor(Sensor):
     def read(self):
-        # research in progress for connecting sensors RPi
+        # research in progress for connecting sensors to RPi
         pass
 
 
 # TODO: discover and process sensors here
-sensors = []
+sensor_list = []
 
 # for now, mock sensors
 from random import uniform
 
 s = TemperatureSensor('incoming_air')
 s.read = lambda: round(uniform(70, 80), 1)
-sensors.append(s)
+sensor_list.append(s)
 
 s = TemperatureSensor('outgoing_air')
 s.read = lambda: round(uniform(60, 70), 1)
-sensors.append(s)
+sensor_list.append(s)
 
 s = PressureSensor('pressure')
-s.read = lambda: round(uniform(.8, 1), 1)
-sensors.append(s)
+s.read = lambda: round(uniform(.8, 1), 2)
+sensor_list.append(s)
