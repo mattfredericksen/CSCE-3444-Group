@@ -8,30 +8,22 @@ from prometheus_client.exposition import make_wsgi_app
 
 from flask import Flask
 from flask_restful import Resource, Api
-from prometheus_client import Gauge
 
 from sensors import sensor_list
 
 app = Flask(__name__)
 api = Api(app)
 
-# Errors might happen here after a hot-reload in debug mode
-#     ValueError: Duplicated timeseries in CollectorRegistry
-gauges = []
-for s in sensor_list:
-    g = Gauge(s.name, f'{s.name} sensor')
-    g.set_function(s.read)
-    gauges.append(s)
-
 # TODO: consider switching from HTTP to HTTPS
 #       and adding authentication
 
 
 class Sensors(Resource):
-    def get(self):
+    @staticmethod
+    def get():
         # TODO: consider making this response JSend compliant
         #       https://github.com/omniti-labs/jsend
-        return {s.name: s.read() for s in sensor_list}
+        return {s._name: s.read() for s in sensor_list}
 
 
 api.add_resource(Sensors, '/')
