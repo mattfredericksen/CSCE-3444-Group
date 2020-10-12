@@ -3,6 +3,7 @@ This module will discover available sensors
 and wrap them in the Sensor class
 """
 from prometheus_client import Gauge, Enum
+from weather_api.weatheraccess import get_weather
 from random import uniform, choice
 
 
@@ -53,6 +54,10 @@ sensor_list.append(s)
 
 s = TemperatureSensor('outgoing_air')
 s.read = lambda: round(uniform(60, 70), 1)
+sensor_list.append(s)
+
+s = TemperatureSensor('outside_air')
+s.read = get_weather
 sensor_list.append(s)
 
 s = PressureSensor('pressure')
