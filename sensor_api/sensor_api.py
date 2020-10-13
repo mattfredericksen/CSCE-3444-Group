@@ -23,7 +23,7 @@ class Sensors(Resource):
     def get():
         # TODO: consider making this response JSend compliant
         #       https://github.com/omniti-labs/jsend
-        return {s._name: s.read() for s in sensor_list}
+        return {s._name: s.collect()[0].samples[0].value for s in sensor_list}
 
 
 api.add_resource(Sensors, '/')

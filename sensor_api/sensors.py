@@ -9,7 +9,7 @@ from random import uniform, choice
 
 class Sensor(Gauge):
     def __init__(self, name):
-        super().__init__(name, f'{self.__class__.__name__}')
+        super().__init__(name, self.__class__.__name__)
 
     def read(self):
         raise NotImplementedError
@@ -32,6 +32,11 @@ class PressureSensor(Sensor):
 
 
 class StateSensor(Enum):
+    # Rather than recording a count of the times the system has cycled,
+    # this sensor just checks the current on/off state.
+    # Later, we can use this function for creating the count:
+    # https://prometheus.io/docs/prometheus/latest/querying/functions/#changes
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -47,6 +52,11 @@ class StateSensor(Enum):
 # TODO: discover and process sensors here
 sensor_list = []
 
+s = Gauge('outside_air', 'Outside air temperature')
+s.set_function(get_weather)
+sensor_list.append(s)
+
+
 # for now, mock sensors
 s = TemperatureSensor('incoming_air')
 s.read = lambda: round(uniform(70, 80), 1)
@@ -56,14 +66,10 @@ s = TemperatureSensor('outgoing_air')
 s.read = lambda: round(uniform(60, 70), 1)
 sensor_list.append(s)
 
-s = TemperatureSensor('outside_air')
-s.read = get_weather
-sensor_list.append(s)
-
 s = PressureSensor('pressure')
 s.read = lambda: round(uniform(.8, 1), 2)
 sensor_list.append(s)
 
-s = StateSensor('State', 'Whether the HVAC is on or off', states=['on', 'off'])
+s = StateSensor('state', 'Whether the HVAC is on or off', states=['on', 'off'])
 s.read = lambda: choice(['on', 'off'])
 sensor_list.append(s)
