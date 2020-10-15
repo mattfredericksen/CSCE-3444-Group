@@ -1,4 +1,6 @@
 import React from 'react';
+import ListGroup from "react-bootstrap/ListGroup";
+import Spinner from "react-bootstrap/Spinner";
 
 class LiveView extends React.Component {
   constructor(props) {
@@ -11,6 +13,18 @@ class LiveView extends React.Component {
   }
 
   componentDidMount() {
+    this.update();
+    this.timerID = setInterval(
+        () => this.update(),
+        15000
+    );
+  }
+
+  componentWillUnmount() {
+    clearInterval(this.timerID);
+  }
+
+  update() {
     fetch("http://localhost:5000/")
         .then(res => res.json())
         .then(
@@ -37,16 +51,21 @@ class LiveView extends React.Component {
     if (error) {
       return <div>Error: {error.message}</div>;
     } else if (!isLoaded) {
-      return <div>Loading...</div>;
+      return (
+          <Spinner animation="border" role="status">
+            <span className="sr-only">Loading...</span>
+          </Spinner>
+      );
     } else {
       return (
-          <ul>
+          <ListGroup>
             {sensors.map(sensor => (
-                <li key={sensor.name}>
+                // TODO: items need 'key' prop added
+                <ListGroup.Item>
                   {sensor.name}: {sensor.value}
-                </li>
+                </ListGroup.Item>
             ))}
-          </ul>
+          </ListGroup>
       );
     }
   }
