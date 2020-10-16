@@ -1,4 +1,8 @@
 import React from 'react';
+import ListGroup from "react-bootstrap/ListGroup";
+import Spinner from "react-bootstrap/Spinner";
+
+import { api, extract_sensors } from "./prometheus";
 
 class LiveView extends React.Component {
   constructor(props) {
@@ -6,18 +10,31 @@ class LiveView extends React.Component {
     this.state = {
       error: null,
       isLoaded: false,
-      items: []
+      sensors: []
     };
   }
 
   componentDidMount() {
-    fetch("http://localhost:5000/")
+    this.update();
+    this.timerID = setInterval(
+        () => this.update(),
+        15000
+    );
+  }
+
+  componentWillUnmount() {
+    clearInterval(this.timerID);
+  }
+
+  update() {
+    fetch(api + "query={job=%22sensors%22,__name__!~%22(python|scrape).*%22}")
         .then(res => res.json())
         .then(
             (result) => {
               this.setState({
                 isLoaded: true,
-                sensors: result
+                error: false,
+                sensors: extract_sensors(result),
               });
             },
             // Note: it's important to handle errors here
@@ -37,16 +54,21 @@ class LiveView extends React.Component {
     if (error) {
       return <div>Error: {error.message}</div>;
     } else if (!isLoaded) {
-      return <div>Loading...</div>;
+      return (
+          <Spinner animation="border" role="status">
+            <span className="sr-only">Loading...</span>
+          </Spinner>
+      );
     } else {
       return (
-          <ul>
-            {sensors.map(sensor => (
-                <li key={sensor.name}>
-                  {sensor.name}: {sensor.value}
-                </li>
-            ))}
-          </ul>
+          <ListGroup>
+             {sensors.map(sensor => (
+                 // TODO: items need 'key' prop added
+                 <ListGroup.Item>
+                   {sensor.name}: {sensor.value}
+                 </ListGroup.Item>
+             ))}
+           </ListGroup>
       );
     }
   }
