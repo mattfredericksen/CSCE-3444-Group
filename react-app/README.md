@@ -1,3 +1,12 @@
+### Note
+
+You must have [Node.js and npm](https://nodejs.org/en/) installed to run this app. 
+We are using the current Node.js version, 14.14.0.  
+  
+After cloning this directory, run `npm install` to install dependencies.
+
+<hr />
+
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
 ## Available Scripts
