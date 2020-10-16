@@ -10,7 +10,7 @@ from flask import Flask
 from flask_restful import Resource, Api
 from flask_cors import CORS
 
-from sensors import sensor_list
+from sensors import get_sensors
 
 app = Flask(__name__)
 
@@ -21,6 +21,8 @@ api = Api(app)
 
 # TODO: consider switching from HTTP to HTTPS
 #       and adding authentication
+
+sensor_list = get_sensors()
 
 
 class Sensors(Resource):
