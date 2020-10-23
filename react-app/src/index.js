@@ -2,11 +2,15 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
 import LiveView from './LiveView';
+import MomentUtils from '@date-io/moment';
+import { MuiPickersUtilsProvider } from '@material-ui/pickers';
 import * as serviceWorker from './serviceWorker';
 
 ReactDOM.render(
   <React.StrictMode>
-    <LiveView />
+      <MuiPickersUtilsProvider utils={MomentUtils}>
+          <LiveView />
+      </MuiPickersUtilsProvider>
   </React.StrictMode>,
   document.getElementById('root')
 );
