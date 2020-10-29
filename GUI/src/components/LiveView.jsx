@@ -1,13 +1,6 @@
 import React from 'react';
 import ListGroup from "react-bootstrap/ListGroup";
 import Spinner from "react-bootstrap/Spinner";
-import {
-    // DatePicker,
-    // TimePicker,
-    DateTimePicker,
-    // MuiPickersUtilsProvider,
-} from '@material-ui/pickers';
-import moment from "moment";
 
 import { fetchMostRecent, fetchRangeAggregates } from "./prometheus";
 
@@ -20,8 +13,6 @@ class LiveView extends React.Component {
             error: null,
             isLoaded: false,
             metrics: [],
-            startDate: moment(),
-            endDate: moment(),
         };
     }
 
@@ -66,24 +57,6 @@ class LiveView extends React.Component {
             )
     }
 
-    setStartDate(date) {
-        // experimental function; check the console log
-        this.setState({startDate: date});
-        fetchRangeAggregates(date, this.state.endDate)
-            .catch(e => {
-                this.setState({error: e})
-            });
-    }
-
-    setEndDate(date) {
-        // experimental function; check the console log
-        this.setState({endDate: date});
-        fetchRangeAggregates(this.state.startDate, date)
-            .catch(e => {
-                this.setState({error: e})
-            });
-    }
-
     render() {
         const { error, isLoaded, metrics, startDate, endDate } = this.state;
         if (error) {
@@ -103,23 +76,13 @@ class LiveView extends React.Component {
         }
         else {
             return (
-                // DateTimePickers are here temporarily for experimental purposes.
-                <>
-                    <DateTimePicker
-                      value={startDate}
-                      onChange={(d) => this.setStartDate(d)} />
-                    <DateTimePicker
-                      value={endDate}
-                      onChange={(d) => this.setEndDate(d)} />
-                    <hr style={{height: "30px", visibility: "hidden"}}/>
-                    <ListGroup>
-                      {metrics.map(metric => (
-                          <ListGroup.Item key={metric.name}>
-                            {metric.name}: {metric.value}
-                          </ListGroup.Item>
-                      ))}
-                    </ListGroup>
-                </>
+                <ListGroup>
+                  {metrics.map(metric => (
+                      <ListGroup.Item key={metric.name}>
+                        {metric.name}: {metric.value}
+                      </ListGroup.Item>
+                  ))}
+                </ListGroup>
           );
         }
     }
