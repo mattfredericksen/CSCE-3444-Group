@@ -2,8 +2,8 @@
 This module will discover available sensors and make
 them accessible through the `get_sensors()` function.
 """
-from prometheus_client import Gauge, Enum
-from weather_api.weatheraccess import get_weather
+from prometheus_client import Gauge
+from weatheraccess import get_weather
 from random import uniform, choice
 
 
@@ -15,6 +15,8 @@ class Sensor(Gauge):
         raise NotImplementedError
 
     def collect(self):
+        # overriding this function allows sensors to refresh
+        # immediately before yielding metrics to Prometheus
         self.set(self.read())
         return super().collect()
 
@@ -31,23 +33,15 @@ class PressureSensor(Sensor):
         pass
 
 
-class StateSensor(Enum):
+class StateSensor(Sensor):
     # Rather than recording a count of the times the system has cycled,
     # this sensor just checks the current on/off state.
     # Later, we can use this function for creating the count:
     # https://prometheus.io/docs/prometheus/latest/querying/functions/#changes
-    # TODO: stop using Enum since it creates a label for each state
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
 
     def read(self):
         # research if progress for checking on/off state
         pass
-
-    def collect(self):
-        self.state(self.read())
-        return super().collect()
 
 
 # TODO: discover and process sensors here
@@ -77,8 +71,8 @@ def get_sensors():
     s.read = lambda: round(uniform(.8, 1), 2)
     sensor_list.append(s)
 
-    s = StateSensor('state', 'Whether the HVAC is on or off', states=['on', 'off'])
-    s.read = lambda: choice(['on', 'off'])
+    s = StateSensor('is_on')
+    s.read = lambda: choice([True, False])
     sensor_list.append(s)
 
     return sensor_list

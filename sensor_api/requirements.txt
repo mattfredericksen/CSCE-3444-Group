@@ -1,7 +1,7 @@
 flask~=1.1.2
 flask-restful
 flask-cors
-pytest~=6.1.1
+pytest
 Werkzeug~=1.0.1
 requests~=2.24.0
 prometheus_client

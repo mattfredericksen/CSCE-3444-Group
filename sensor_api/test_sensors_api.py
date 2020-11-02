@@ -25,5 +25,6 @@ def test_sensor_count(response):
 
 def test_all_sensors_reading(response):
     data = json.loads(response.data)
-    for name, value in (sensor.values() for sensor in data):
-        assert value is not None, f'with sensor "{name}"'
+    for sensor in data:
+        for sample in sensor:
+            assert sample['value'] is not None, f'with sensor "{sample["""name"""]}"'
