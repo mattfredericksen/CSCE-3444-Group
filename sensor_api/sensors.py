@@ -2,7 +2,7 @@
 This module will discover available sensors and make
 them accessible through the `get_sensors()` function.
 """
-from prometheus_client import Gauge
+from prometheus_client import Gauge, REGISTRY
 from weatheraccess import get_weather
 
 import board
@@ -73,17 +73,26 @@ device_addr_map = {
 def get_sensors():
     """This function returns a list of objects which
     can be detected by Prometheus's metric scraping.
-    It should only be called once to avoid duplicating
-    metrics in the collector registry.
+    If called a second time, objects from the previous
+    call will become invalid.
     """
 
-    addresses = i2c.scan()
-    if len(addresses) != len(device_addr_map):
-        print(f'Expected addresses: {list(device_addr_map.keys())}')
-        print(f'Discovered addresses: {addresses}')
+    # Remove default metrics and metrics created
+    # previously by this function.
+    for c in set(REGISTRY._names_to_collectors.values()):
+        REGISTRY.unregister(c)
 
+    # get a list of occupied i2c addresses
+    addresses = i2c.scan()
+
+    # compare discovered devices to expected devices
+    if set(addresses) != set(device_addr_map.keys()):
+        print(f'Unexpected I2C addresses: {set(addresses) - set(device_addr_map.keys())}')
+        print(f'Missing I2C addresses: {set(device_addr_map.keys()) - set(addresses)}')
+
+    # create prometheus metrics
     sensor_list = []
-    for addr in i2c.scan():
+    for addr in addresses:
         if addr in device_addr_map:
             cls, args, kwargs = device_addr_map[addr]
             sensor_list.append(cls(addr, *args, **kwargs))
