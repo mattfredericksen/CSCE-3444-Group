@@ -34,7 +34,7 @@ class App extends Component {
 
                                 </img>
                                 <a className="navbar-brand">
-                                    <strong>Temperature Checker</strong>
+                                    <strong>HVAC Monitor</strong>
                                 </a>
                                 <div>
                                     <Link to ='/'>
