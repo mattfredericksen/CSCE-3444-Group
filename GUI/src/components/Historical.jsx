@@ -8,13 +8,6 @@ import {
     // MuiPickersUtilsProvider,
 } from '@material-ui/pickers';
 
-const theBeginning = (
-    oldestSample()
-        .catch(e => {
-            console.error("Failed to retrieve oldestSample");
-            return moment();
-        })
-);
 
 class Historical extends Component {
     constructor(props) {
@@ -34,25 +27,23 @@ class Historical extends Component {
         };
     }
 
+    update() {
+        // experimental function; check the console log
+        const { startDate, endDate } = this.state;
+        console.log(`update: \n\t${startDate} \n\t${endDate}`);
+
+        fetchRangeAggregates(startDate, endDate);
+            // .catch(e => console.log(e.message));
+    }
+
     setStartDate(date) {
         console.log(this.state);
-        // experimental function; check the console log
-        this.setState({startDate: date});
-        // fetchRangeAggregates(date, this.state.endDate)
-        //     .catch(e => {
-        //         this.setState({error: e})
-        //     });
-        getRangeOffset(date, this.state.endDate);
+        this.setState({startDate: date}, () => this.update());
     }
 
     setEndDate(date) {
         // experimental function; check the console log
-        this.setState({endDate: date});
-        // fetchRangeAggregates(this.state.startDate, date)
-        //     .catch(e => {
-        //         this.setState({error: e})
-        //     });
-        getRangeOffset(this.state.startDate, date);
+        this.setState({endDate: date}, () => this.update());
     }
 
     render() {
