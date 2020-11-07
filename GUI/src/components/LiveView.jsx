@@ -2,7 +2,7 @@ import React from 'react';
 import ListGroup from "react-bootstrap/ListGroup";
 import Spinner from "react-bootstrap/Spinner";
 
-import { fetchMostRecent, fetchRangeAggregates } from "./prometheus";
+import { fetchLive } from "./prometheus";
 
 
 class LiveView extends React.Component {
@@ -37,7 +37,7 @@ class LiveView extends React.Component {
 
         // retrieve the most recent metrics in the
         // database and update the state with them.
-        fetchMostRecent()
+        fetchLive()
             .then(metrics => {
                   this.setState({
                         isLoaded: true,
@@ -58,7 +58,7 @@ class LiveView extends React.Component {
     }
 
     render() {
-        const { error, isLoaded, metrics, startDate, endDate } = this.state;
+        const { error, isLoaded, metrics } = this.state;
         if (error) {
             return (
                 <div>
