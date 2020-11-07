@@ -1,18 +1,20 @@
 import React, { Component } from "react";
 import moment from "moment";
-import {fetchRangeAggregates, getRangeOffset, oldestSample } from "./prometheus";
+import { fetchRangeAggregates, oldestSample } from "./prometheus";
 import {
     // DatePicker,
     // TimePicker,
     DateTimePicker,
     // MuiPickersUtilsProvider,
 } from '@material-ui/pickers';
+import ListGroup from "react-bootstrap/ListGroup";
 
 
 class Historical extends Component {
     constructor(props) {
         super(props);
 
+        // set the earliest date available to the date-pickers
         oldestSample()
             .then(res => this.setState({minDate: res}),
                   e => console.error("Failed to retrieve oldestSample")
@@ -23,32 +25,43 @@ class Historical extends Component {
             minDate: moment(),
             startDate: moment(),
             endDate: moment(),
+            metrics: {},
             error: null,
         };
     }
 
     update() {
-        // experimental function; check the console log
         const { startDate, endDate } = this.state;
         console.log(`update: \n\t${startDate} \n\t${endDate}`);
 
-        fetchRangeAggregates(startDate, endDate);
-            // .catch(e => console.log(e.message));
+        // Values returned are promises. Set each promise
+        // to update state when they resolve.
+        const metrics = fetchRangeAggregates(startDate, endDate);
+        for (const name in metrics) {
+            metrics[name].then(value => this.updateMetric(name, value));
+        }
+    }
+
+    updateMetric(name, value) {
+        // This function ensures that rapid state changes
+        // are processed correctly.
+        const { metrics } = this.state;
+        this.setState({metrics: metrics},
+            () => console.log("metrics update: ", this.state.metrics));
     }
 
     setStartDate(date) {
-        console.log(this.state);
         this.setState({startDate: date}, () => this.update());
     }
 
     setEndDate(date) {
-        // experimental function; check the console log
         this.setState({endDate: date}, () => this.update());
     }
 
     render() {
-        const { isOpen, minDate, startDate, endDate, error } = this.state;
-        return(
+        const { minDate, startDate, endDate, metrics } = this.state;
+        console.log(metrics);
+        return (
             <div>
                 <style>{"h3 {color:white}"}</style>
                 <h3 className="m-2">
@@ -63,6 +76,13 @@ class Historical extends Component {
                     value={endDate}
                     onChange={(d) => this.setEndDate(d)}
                     minDate={minDate} disableFuture={true} />
+                <ListGroup>
+                    {Object.keys(metrics).map((name) =>
+                    <ListGroup.Item key={name}>
+                        {name}: {metrics[name]}
+                    </ListGroup.Item>
+                    )}
+                </ListGroup>
             </div>
         );
     }
