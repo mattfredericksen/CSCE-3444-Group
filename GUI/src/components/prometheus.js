@@ -90,17 +90,15 @@ async function extract(response) {
     response = await response.json();
 
     if (response.status === "error") {
-        // throw new Error(response.error);
-        console.error(response.error);
-        return null;
+        console.error(response);
+        throw new Error(response.error);
     }
 
     try {
         return response.data.result[1];
     } catch {
-        // throw new Error("...");
         console.error("Unable to extract `data.result[1]` from: ", response);
-        return null;
+        throw new Error("Unable to extract data from Prometheus's response");
     }
 }
 
