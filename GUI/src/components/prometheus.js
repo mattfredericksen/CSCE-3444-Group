@@ -108,7 +108,6 @@ function fetchQuery(query, range, offset) {
     console.log("sending query: " + formatQuery(query, range, offset));
     return (
         fetch(formatQuery(query, range, offset))
-            // .then(res => res.json())
             .then(res => {
                 res = extract(res);
                 console.log({
@@ -131,10 +130,24 @@ function avgTemperatureDelta(range, offset) {
     );
 }
 
+function avgOnCycleDuration(range, offset) {
+    return fetchQuery(
+        "(sum_over_time(is_on[{r}:15s]{o}) / (changes(is_on[{r}:15s]{o}) / 2)) * 15",
+        range, offset
+    );
+}
+
 export function fetchRangeAggregates(startDate, endDate) {
     const {range, offset} = getRangeOffset(startDate, endDate);
+
+    // TODO: implement conditional results.
+    //       ex: get average daily on/off cycle count
+    //       only if range > 1d, and cut off results from
+    //       partial days.
+
     return ({
         "On/Off Cycle Count": onOffCycleCount(range, offset),
         "Average Delta-T": avgTemperatureDelta(range, offset),
+        "Average On-Cycle Duration": avgOnCycleDuration(range, offset),
     });
 }

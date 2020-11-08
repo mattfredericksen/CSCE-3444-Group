@@ -46,7 +46,8 @@ class Historical extends Component {
         // This function ensures that rapid state changes
         // are processed correctly.
         const { metrics } = this.state;
-        this.setState({metrics: metrics},
+
+        this.setState({metrics: {...metrics, [name]: value}},
             () => console.log("metrics update: ", this.state.metrics));
     }
 
@@ -60,7 +61,7 @@ class Historical extends Component {
 
     render() {
         const { minDate, startDate, endDate, metrics } = this.state;
-        console.log(metrics);
+
         return (
             <div>
                 <style>{"h3 {color:white}"}</style>
