@@ -7,7 +7,7 @@ import {
     DateTimePicker,
     // MuiPickersUtilsProvider,
 } from '@material-ui/pickers';
-import Snackbar from "@material-ui/core/Snackbar";
+import { Container, Grid, Paper, Snackbar } from "@material-ui/core";
 import Alert from '@material-ui/lab/Alert';
 import ListGroup from "react-bootstrap/ListGroup";
 
@@ -37,7 +37,7 @@ class Historical extends Component {
             .catch(e => this.setAlert("Unable to retrieve oldest sample", "warning"));
     }
 
-    setAlert(message = "", severity = "error") {
+    setAlert(message="", severity="error") {
         // call with no arguments to remove alert
 
         this.setState({
@@ -98,35 +98,43 @@ class Historical extends Component {
         const { minDate, startDate, endDate, metrics, alert } = this.state;
 
         return (
-            <div>
-                <style>{"h3 {color:white}"}</style>
-                <h3 className="m-2">
-                    Historical
-                </h3>
-
-                <DateTimePicker
-                    value={startDate}
-                    onChange={this.setStartDate}
-                    minDate={minDate} disableFuture={true} />
-                <DateTimePicker
-                    value={endDate}
-                    onChange={this.setEndDate}
-                    minDate={minDate} disableFuture={true} />
-
-                <ListGroup>
-                    {Object.keys(metrics).map((name) =>
-                        <ListGroup.Item key={name}>
-                            {name}: {metrics[name]}
-                        </ListGroup.Item>
-                    )}
-                </ListGroup>
-
-                <Snackbar open={alert.message} onClose={this.closeAlert}>
-                    <Alert severity={alert.severity} onClose={this.closeAlert}>
+            <Container maxWidth={"md"}>
+                <Grid container spacing={3} justify={'center'}>
+                    <Grid item xs={8}>
+                        <h3 style={{'text-align': 'center', 'color': 'white'}}>Historical</h3>
+                    </Grid>
+                    <Grid item xs={8} sm={6}>
+                        <Paper>
+                            <DateTimePicker
+                                value={startDate} fullWidth
+                                onChange={this.setStartDate}
+                                minDate={minDate} disableFuture={true} />
+                        </Paper>
+                    </Grid>
+                    <Grid item xs={8} sm={6}>
+                        <Paper>
+                            <DateTimePicker
+                                value={endDate} fullWidth
+                                onChange={this.setEndDate}
+                                minDate={minDate} disableFuture={true} />
+                        </Paper>
+                    </Grid>
+                    <Grid item xs={12}>
+                        <ListGroup>
+                            {Object.keys(metrics).map((name) =>
+                                <ListGroup.Item key={name}>
+                                    {name}: {metrics[name]}
+                                </ListGroup.Item>
+                            )}
+                        </ListGroup>
+                    </Grid>
+                </Grid>
+                <Snackbar open={Boolean(alert.message)} onClose={this.closeAlert}>
+                    <Alert severity={alert.severity} onClose={this.closeAlert} variant={'filled'}>
                         {alert.message}
                     </Alert>
                 </Snackbar>
-            </div>
+            </Container>
         );
     }
 }
