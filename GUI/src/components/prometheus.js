@@ -118,21 +118,25 @@ function fetchQuery(query, range, offset) {
 }
 
 function onOffCycleCount(range, offset) {
-    return fetchQuery("changes(is_on[{r}]{o}) / 2", range, offset);
+    return fetchQuery("changes(is_on[{r}]{o}) / 2", range, offset)
+        .then(res => `${res} cycles`);
 }
 
 function avgTemperatureDelta(range, offset) {
     return fetchQuery(
         "avg_over_time(((incoming_air - outgoing_air) and (is_on == 1))[{r}:15s]{o})",
         range, offset
-    );
+    ).then(res => `${Number(res).toFixed(2)} \xB0C`);
 }
 
 function avgOnCycleDuration(range, offset) {
     return fetchQuery(
         "(sum_over_time(is_on[{r}:15s]{o}) / (changes(is_on[{r}:15s]{o}) / 2)) * 15",
         range, offset
-    );
+    ).then(res => {
+        let d = moment.duration(res, 'seconds');
+        return `${d.minutes()} minutes, ${d.seconds()} seconds`;
+    });
 }
 
 export function fetchRangeAggregates(startDate, endDate) {
