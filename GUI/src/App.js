@@ -22,7 +22,7 @@ class App extends Component {
                     <div>
                         <div>
                             <nav className="navbar navbar-expand-lg navbar-light">
-                                <style>{"body {background-color:#2C2F33}"}</style>
+                                <style>{"body {background-color:#696969}"}</style>
                                 <style>{"nav {background-color:white"}</style>
                                 <style>{"p {color:white}"}</style>
                                 <img src={logo}
