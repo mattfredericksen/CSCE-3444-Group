@@ -1,15 +1,11 @@
 import React, { Component } from "react";
 import moment from "moment";
-import { fetchRangeAggregates, oldestSample } from "./prometheus";
-import {
-    // DatePicker,
-    // TimePicker,
-    DateTimePicker,
-    // MuiPickersUtilsProvider,
-} from '@material-ui/pickers';
+import { DateTimePicker } from '@material-ui/pickers';
 import { Container, Grid, Paper, Snackbar } from "@material-ui/core";
 import Alert from '@material-ui/lab/Alert';
-import ListGroup from "react-bootstrap/ListGroup";
+
+import { oldestSample } from "./prometheus";
+import HvacDataGrid from "./HvacDataGrid";
 
 
 class Historical extends Component {
@@ -21,12 +17,10 @@ class Historical extends Component {
             minDate: moment(),
             startDate: moment(),
             endDate: moment(),
-            metrics: {},
             alert: {message: "", severity: "error"},
         };
 
         this.update = this.update.bind(this);
-        this.updateMetric = this.updateMetric.bind(this);
         this.setStartDate = this.setStartDate.bind(this);
         this.setEndDate = this.setEndDate.bind(this);
         this.closeAlert = this.closeAlert.bind(this);
@@ -54,32 +48,11 @@ class Historical extends Component {
 
         if (startDate.isSameOrAfter(endDate)) {
             this.setAlert("Start date must be earlier than end date");
-            return;
-        } else if (this.state.alert) {
-            // clear previous alert
+        } else if (endDate.isAfter(moment())) {
+            this.setAlert("Cannot query the future");
+        } else if (alert.message) {
             this.setAlert();
         }
-
-        // Values returned are promises. Set each promise
-        // to update state when they resolve.
-        const metrics = fetchRangeAggregates(startDate, endDate);
-        for (const name in metrics) {
-            metrics[name]
-                .then(value => this.updateMetric(name, value))
-                .catch(e => {
-                    this.updateMetric(name, "error");
-                    this.setAlert(e.message);
-                });
-        }
-    }
-
-    updateMetric(name, value) {
-        // This function ensures that rapid state changes
-        // are processed correctly.
-        const { metrics } = this.state;
-
-        this.setState({metrics: {...metrics, [name]: value}},
-            () => console.log("metrics update: ", this.state.metrics));
     }
 
     setStartDate(date) {
@@ -95,13 +68,13 @@ class Historical extends Component {
     }
 
     render() {
-        const { minDate, startDate, endDate, metrics, alert } = this.state;
+        const { minDate, startDate, endDate, alert } = this.state;
 
         return (
             <Container maxWidth={"md"}>
                 <Grid container spacing={3} justify={'center'}>
                     <Grid item xs={8}>
-                        <h3 style={{'text-align': 'center', 'color': 'white'}}>Historical</h3>
+                        <h3 style={{textAlign: 'center', color: 'white'}}>Historical</h3>
                     </Grid>
                     <Grid item xs={8} sm={6}>
                         <Paper>
@@ -120,13 +93,7 @@ class Historical extends Component {
                         </Paper>
                     </Grid>
                     <Grid item xs={12}>
-                        <ListGroup>
-                            {Object.keys(metrics).map((name) =>
-                                <ListGroup.Item key={name}>
-                                    {name}: {metrics[name]}
-                                </ListGroup.Item>
-                            )}
-                        </ListGroup>
+                        <HvacDataGrid startDate={startDate} endDate={endDate}/>
                     </Grid>
                 </Grid>
                 <Snackbar open={Boolean(alert.message)} onClose={this.closeAlert}>
