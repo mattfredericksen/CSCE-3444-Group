@@ -2,24 +2,52 @@
 // querying data from the Prometheus database.
 
 import moment from "moment";
+import React from "react";
 
 const api = "http://localhost:9090/api/v1/query?";
 
-function formatQuery(query, range, offset) {
-    // WARNING: converts to scalar, which strips label names
-    query = query.replaceAll("{r}", range).replaceAll("{o}", offset);
-    return `${api}query=scalar(${query})`;
+class Query {
+    constructor(name, template, colSettings) {
+        this.name = name;
+        this.template = template;
+        this.colSettings = colSettings;
+        this.data = null;
+    }
+
+    execute(range, offset) {
+        const query = this.template.replaceAll("{r}", `${range}m`)
+            .replaceAll("{o}", offset > 0 ? ` offset ${offset}m` : "");
+
+        this.data = fetch(`${api}query=(${query})`)
+            .then(res => this.extract(res));
+    }
+
+    async extract(response) {
+        response = await response.json();
+
+        if (response.status === "error") {
+            console.error(response);
+            throw new Error(response.error);
+        }
+
+        try {
+            const data = response.data.result[0];
+            return response.data.resultType === "matrix" ? data.values : [data.value];
+        } catch {
+            console.error("Unable to extract `data.result[0]` from: ", response);
+            // TODO: catch this error somewhere else
+            throw new Error("Unable to extract data from Prometheus's response");
+        }
+    }
 }
 
 export function oldestSample() {
     // Returns the time of the oldest sample in the database.
     // Note: the resolution on this query may need to be shortened
     // if Prometheus has been running for less than a day.
-    return (
-        fetch(formatQuery("min_over_time(timestamp(up)[5y:1d])"))
-            .then(res => res.json())
-            .then(res => moment.unix(res.data.result[1]))
-    );
+    const q = new Query("", "min_over_time(timestamp(up)[5y:1d])");
+    q.execute();
+    return q.data;
 }
 
 export function fetchLive() {
@@ -33,7 +61,6 @@ export function fetchLive() {
             .then(res => extractLiveMetrics(res.data.result))
     );
 }
-
 
 function extractLiveMetrics(result) {
     // Extracts metrics with label names for the LiveView
@@ -63,93 +90,58 @@ function extractLiveMetrics(result) {
     return metrics;
 }
 
-function getRangeOffset(startDate, endDate) {
-    console.log("startDate: " + startDate.toString());
-    console.log("endDate: " + endDate.toString());
-
-    let range = endDate.diff(startDate, 'minutes');
-    let offset = moment().diff(endDate, 'minutes');
-
-    console.log(`range: ${range.toString()} minutes`);
-    console.log(`offset: ${offset.toString()} minutes`);
-
-    if (range <= 0) {
-        throw new Error(`startDate must be earlier than endDate (range: ${range} minutes)`);
-    }
-    if (offset < 0) {
-        throw new Error(`Cannot query the future (offset: ${offset} minutes)`);
-    }
-
+export function getRangeOffset(startDate, endDate) {
     return {
-        'range': `${range}m`,
-        'offset': offset > 0 ? ` offset ${offset}m` : "",
-    }
+        range: endDate.diff(startDate, 'minutes'),
+        offset: moment().diff(endDate, 'minutes')
+    };
 }
 
-async function extract(response) {
-    response = await response.json();
-
-    if (response.status === "error") {
-        console.error(response);
-        throw new Error(response.error);
-    }
-
-    try {
-        return response.data.result[1];
-    } catch {
-        console.error("Unable to extract `data.result[1]` from: ", response);
-        throw new Error("Unable to extract data from Prometheus's response");
-    }
-}
-
-function fetchQuery(query, range, offset) {
-    console.log("sending query: " + formatQuery(query, range, offset));
-    return (
-        fetch(formatQuery(query, range, offset))
-            .then(res => {
-                res = extract(res);
-                console.log({
-                    query: query,
-                    result: res
-                });
-                return res;
-            })
-    );
-}
-
-function onOffCycleCount(range, offset) {
-    return fetchQuery("changes(is_on[{r}]{o}) / 2", range, offset)
-        .then(res => `${res} cycles`);
-}
-
-function avgTemperatureDelta(range, offset) {
-    return fetchQuery(
+export const Queries = [
+    new Query(
+        "On/Off Cycle Count",
+        "changes(is_on[{r}]{o}) / 2",
+        {
+            width: 160,
+        }
+    ),
+    new Query(
+        "Average Delta-T",
         "avg_over_time(((incoming_air - outgoing_air) and (is_on == 1))[{r}:15s]{o})",
-        range, offset
-    ).then(res => `${Number(res).toFixed(2)} \xB0C`);
-}
-
-function avgOnCycleDuration(range, offset) {
-    return fetchQuery(
+        {
+            width: 135,
+            valueFormatter: ({value}) => `${Number(value).toFixed(2)} \xB0C`
+        }
+    ),
+    new Query(
+        "Average On-Cycle Duration",
         "(sum_over_time(is_on[{r}:15s]{o}) / (changes(is_on[{r}:15s]{o}) / 2)) * 15",
-        range, offset
-    ).then(res => {
-        let d = moment.duration(res, 'seconds');
-        return `${d.minutes()} minutes, ${d.seconds()} seconds`;
-    });
-}
+        {
+            width: 205,
+            valueFormatter: ({value}) => {
+                let d = moment.duration(value, 'seconds');
+                return `${d.minutes()} minutes, ${d.seconds()} seconds`;
+            }
+        }
+    )
+]
 
-export function fetchRangeAggregates(startDate, endDate) {
-    const {range, offset} = getRangeOffset(startDate, endDate);
-
-    // TODO: implement conditional results.
-    //       ex: get average daily on/off cycle count
-    //       only if range > 1d, and cut off results from
-    //       partial days.
-
-    return ({
-        "On/Off Cycle Count": onOffCycleCount(range, offset),
-        "Average Delta-T": avgTemperatureDelta(range, offset),
-        "Average On-Cycle Duration": avgOnCycleDuration(range, offset),
-    });
+export async function rowsFromQueries(range, offset) {
+    const data = await Promise.all(
+        Queries.map(
+            async (q) => {
+                q.execute(range, offset);
+                return [q.name, await q.data];
+            })
+    )
+    return data[0][1].map(
+        ([ts,_], i) => ({
+            id: i, Timestamp: ts,
+            ...Object.fromEntries(
+                data.map(
+                    ([name, values]) => [name, values[i][1]]
+                )
+            )
+        })
+    );
 }
