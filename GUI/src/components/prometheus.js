@@ -2,7 +2,6 @@
 // querying data from the Prometheus database.
 
 import moment from "moment";
-import React from "react";
 
 const api = "http://localhost:9090/api/v1/query?";
 
@@ -110,7 +109,7 @@ export const Queries = [
         "avg_over_time(((incoming_air - outgoing_air) and (is_on == 1))[{r}:15s]{o})",
         {
             width: 135,
-            valueFormatter: ({value}) => `${Number(value).toFixed(2)} \xB0C`
+            valueFormatter: ({value}) => `${value.toFixed(2)} \xB0C`
         }
     ),
     new Query(
@@ -120,7 +119,10 @@ export const Queries = [
             width: 205,
             valueFormatter: ({value}) => {
                 let d = moment.duration(value, 'seconds');
-                return `${d.minutes()} minutes, ${d.seconds()} seconds`;
+                return (
+                    (d.asMinutes() < 1 ? "" : `${d.minutes()} minutes, `)
+                    + `${d.seconds()} seconds`
+                );
             }
         }
     )
@@ -139,7 +141,7 @@ export async function rowsFromQueries(range, offset) {
             id: i, Timestamp: ts,
             ...Object.fromEntries(
                 data.map(
-                    ([name, values]) => [name, values[i][1]]
+                    ([name, values]) => [name, Number(values[i][1])]
                 )
             )
         })
