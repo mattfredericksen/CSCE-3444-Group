@@ -5,48 +5,85 @@ import moment from "moment";
 
 const api = "http://localhost:9090/api/v1/query?";
 
+/**
+ * A class representing Prometheus queries and facilitating
+ * query response data extraction.
+ */
 class Query {
-    constructor(name, template, colSettings) {
+    /**
+     * @param {string} name is a human-readable name describing
+     *     the purpose of the query. It is also used as the column
+     *     header when displayed by `HvacDataGrid`.
+     *
+     * @param {string} template is the query text which will
+     *     be sent to Prometheus. It may contain tags {r} and {o},
+     *     which will be replaced by `range` and `offset` arguments
+     *     as passed to `Query.execute`.
+     *
+     * @param {Object=} colSettings contains settings that will
+     *     be applied to this query's column when loaded by `HvacDataGrid`.
+     */
+    constructor(name, template, colSettings={}) {
         this.name = name;
         this.template = template;
         this.colSettings = colSettings;
-        this.data = null;
     }
 
-    execute(range, offset) {
+    /**
+     * Executes the query and returns a Promise
+     * containing the extracted result array.
+     *
+     * @param {Number=} range
+     * @param {Number=} offset
+     * @returns {Promise<Array[]>}
+     */
+    async execute(range=0, offset=0) {
         const query = this.template.replaceAll("{r}", `${range}m`)
             .replaceAll("{o}", offset > 0 ? ` offset ${offset}m` : "");
 
-        this.data = fetch(`${api}query=(${query})`)
-            .then(res => this.extract(res));
+        return this.extract(await fetch(`${api}query=(${query})`));
     }
 
+    /**
+     * Takes Prometheus's HTTP response and extracts
+     * the data result arrays.
+     *
+     * @param response {Response}
+     * @returns {Promise<Array[]>}
+     * @throws when response status is "error"
+     *     or when response data is empty.
+     */
     async extract(response) {
-        response = await response.json();
+        const res = await response.json();
 
-        if (response.status === "error") {
-            console.error(response);
-            throw new Error(response.error);
+        if (res.status === "error") {
+            console.error(res);
+            throw new Error(res.error);
         }
 
         try {
-            const data = response.data.result[0];
-            return response.data.resultType === "matrix" ? data.values : [data.value];
+            const data = res.data.result[0];
+            // The result may contain a single Array or an
+            // Array of Arrays. This logic ensures the dimensions
+            // of the return value are always the same.
+            return res.data.resultType === "matrix" ? data.values : [data.value];
         } catch {
-            console.error("Unable to extract `data.result[0]` from: ", response);
+            console.error("Unable to extract `data.result[0]` from: ", res);
             // TODO: catch this error somewhere else
             throw new Error("Unable to extract data from Prometheus's response");
         }
     }
 }
 
-export function oldestSample() {
-    // Returns the time of the oldest sample in the database.
-    // Note: the resolution on this query may need to be shortened
+/**
+ * Returns the time of the oldest sample in the database.
+ * @returns {Promise<Moment>}
+ */
+export async function oldestSample() {
+    // The resolution on this query may need to be shortened
     // if Prometheus has been running for less than a day.
     const q = new Query("", "min_over_time(timestamp(up)[5y:1d])");
-    q.execute();
-    return q.data;
+    return moment.unix((await q.execute())[0][1]);
 }
 
 export function fetchLive() {
@@ -89,6 +126,13 @@ function extractLiveMetrics(result) {
     return metrics;
 }
 
+/**
+ * Given two moments, returns the difference between them
+ * and the difference between the latter and right now.
+ * @param startDate {Moment}
+ * @param endDate {Moment}
+ * @returns {{offset: Number, range: Number}}
+ */
 export function getRangeOffset(startDate, endDate) {
     return {
         range: endDate.diff(startDate, 'minutes'),
@@ -96,6 +140,17 @@ export function getRangeOffset(startDate, endDate) {
     };
 }
 
+/**
+ * @type {Query[]}
+ * An array of Query instances which will be executed
+ * when loading `HvacDataGrid`. Their order in this
+ * Array determines the column order of the DataGrid.
+ *
+ * colSettings:
+ * `width` is the column width for this query.
+ * `valueFormatter` is a function which will be
+ *     applied before displaying the data.
+ */
 export const Queries = [
     new Query(
         "On/Off Cycle Count",
@@ -128,14 +183,25 @@ export const Queries = [
     )
 ]
 
+/**
+ * Generates a list of row objects for loading into `HvacDataGrid`.
+ * @param {Number} range
+ * @param {Number} offset
+ * @returns {Promise<Object[]>}
+ */
 export async function rowsFromQueries(range, offset) {
+    // get an array of pairs, first item is query name,
+    // second item is array containing query results
     const data = await Promise.all(
         Queries.map(
             async (q) => {
-                q.execute(range, offset);
-                return [q.name, await q.data];
+                return [q.name, await q.execute(range, offset)];
             })
     )
+    // for every timestamp and index of the first
+    // query result array, create a row object
+    // containing that timestamp and the result
+    // of each query at the same index.
     return data[0][1].map(
         ([ts,_], i) => ({
             id: i, Timestamp: ts,
