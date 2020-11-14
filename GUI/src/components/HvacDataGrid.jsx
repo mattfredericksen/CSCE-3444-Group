@@ -3,12 +3,17 @@ import moment from "moment";
 import { DataGrid } from "@material-ui/data-grid";
 import { Queries, rowsFromQueries, getRangeOffset } from "./prometheus";
 
-
+/**
+ * A static array of column definitions for the Data Grid.
+ */
 const columns = [{
         field: 'Timestamp',
-        width: 200,
-        valueFormatter: ({value}) => moment.unix(value),
+        width: 140,
+        valueFormatter: ({value}) => (
+            moment.unix(value).format("M/DD/YY HH:mm")
+        ),
     },
+    // generate column defs from Query objects
     ...Queries.map((q) => ({field: q.name, ...q.colSettings}))
 ];
 
