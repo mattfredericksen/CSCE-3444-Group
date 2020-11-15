@@ -1,7 +1,8 @@
 import React, { Component } from "react";
 import moment from "moment";
 import { DateTimePicker } from '@material-ui/pickers';
-import { Container, Grid, Paper, Snackbar } from "@material-ui/core";
+import { Container, Grid, Snackbar, InputAdornment } from "@material-ui/core";
+import EventIcon from '@material-ui/icons/Event';
 import Alert from '@material-ui/lab/Alert';
 
 import { oldestSample } from "./prometheus";
@@ -43,7 +44,7 @@ class Historical extends Component {
     }
 
     update() {
-        const { startDate, endDate } = this.state;
+        const { startDate, endDate, alert } = this.state;
         console.log(`update: \n\t${startDate} \n\t${endDate}`);
 
         if (startDate.isSameOrAfter(endDate)) {
@@ -77,20 +78,32 @@ class Historical extends Component {
                         <h3 style={{textAlign: 'center', color: 'white'}}>Historical</h3>
                     </Grid>
                     <Grid item xs={8} sm={6}>
-                        <Paper>
-                            <DateTimePicker
-                                value={startDate} fullWidth
-                                onChange={this.setStartDate}
-                                minDate={minDate} disableFuture={true} />
-                        </Paper>
+                        <DateTimePicker
+                            label={"Start Date"} value={startDate}
+                            onChange={this.setStartDate}
+                            minDate={minDate} disableFuture={true}
+                            inputVariant={'outlined'} fullWidth
+                            InputProps={{
+                                startAdornment: (
+                                    <InputAdornment position="start">
+                                        <EventIcon />
+                                    </InputAdornment>
+                                ),
+                            }}/>
                     </Grid>
                     <Grid item xs={8} sm={6}>
-                        <Paper>
-                            <DateTimePicker
-                                value={endDate} fullWidth
-                                onChange={this.setEndDate}
-                                minDate={minDate} disableFuture={true} />
-                        </Paper>
+                        <DateTimePicker
+                            label={"End Date"} value={endDate}
+                            onChange={this.setEndDate}
+                            minDate={minDate} disableFuture={true}
+                            inputVariant={'outlined'} fullWidth
+                            InputProps={{
+                                startAdornment: (
+                                    <InputAdornment position="start">
+                                        <EventIcon />
+                                    </InputAdornment>
+                                ),
+                            }}/>
                     </Grid>
                     <Grid item xs={12}>
                         <HvacDataGrid startDate={startDate} endDate={endDate}/>
