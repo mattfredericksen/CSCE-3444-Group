@@ -33,13 +33,19 @@ class Query {
      * Executes the query and returns a Promise
      * containing the extracted result array.
      *
-     * @param {Number=} range
-     * @param {Number=} offset
+     * @param {Number=} range, difference between start and end dates
+     * @param {Number=} offset, difference from now to end date
+     * @param {String=} duration, length of time over which to repeat the query
+     * @param {String=} resolution, how often to repeat the query within `duration`
      * @returns {Promise<Array[]>}
      */
-    async execute(range=0, offset=0) {
-        const query = this.template.replaceAll("{r}", `${range}m`)
+    async execute(range=0, offset=0, duration=null, resolution=null) {
+        let query = this.template.replaceAll("{r}", `${range}m`)
             .replaceAll("{o}", offset > 0 ? ` offset ${offset}m` : "");
+
+        if (duration && resolution) {
+            query = `(${query})[${duration}:${resolution}]`;
+        }
 
         return this.extract(await fetch(`${api}query=(${query})`));
     }
@@ -49,7 +55,7 @@ class Query {
      * the data result arrays.
      *
      * @param response {Response}
-     * @returns {Promise<Array[]>}
+     * @returns {Promise<Array(2)[]>}
      * @throws when response status is "error"
      *     or when response data is empty.
      */
@@ -185,17 +191,17 @@ export const Queries = [
 
 /**
  * Generates a list of row objects for loading into `HvacDataGrid`.
- * @param {Number} range
- * @param {Number} offset
+ *
+ * Parameters follow the signature `Query.execute`.
  * @returns {Promise<Object[]>}
  */
-export async function rowsFromQueries(range, offset) {
+export async function rowsFromQueries(range, offset, duration, resolution) {
     // get an array of pairs, first item is query name,
     // second item is array containing query results
     const data = await Promise.all(
         Queries.map(
             async (q) => {
-                return [q.name, await q.execute(range, offset)];
+                return [q.name, await q.execute(range, offset, duration, resolution)];
             })
     )
     // for every timestamp and index of the first

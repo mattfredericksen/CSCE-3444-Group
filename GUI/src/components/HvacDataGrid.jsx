@@ -18,7 +18,7 @@ const columns = [{
 ];
 
 export default function HvacDataGrid(props) {
-    const { startDate, endDate } = props;
+    const { startDate, endDate, duration, resolution} = props;
     const { range, offset } = getRangeOffset(startDate, endDate);
 
     const [rows, setRows] = useState([]);
@@ -27,12 +27,19 @@ export default function HvacDataGrid(props) {
     useEffect(() => {
         if (range <= 0 || offset < 0) return;
         setLoading(true);
-        rowsFromQueries(range, offset)
+        rowsFromQueries(range, offset, duration, resolution)
             .then(rows => {
                 setRows(rows);
                 setLoading(false);
             });
-    }, [startDate, endDate]);
+    // eslint-disable-next-line
+    }, [startDate, endDate, duration, resolution]);
 
-    return <DataGrid rows={rows} columns={columns} loading={loading} autoPageSize autoHeight />;
+    return (
+        <div style={{ width: '100%', height: '200px' }}>
+            <DataGrid rows={rows} columns={columns} loading={loading}
+                      autoPageSize autoHeight disableExtendRowFullWidth
+            />
+        </div>
+    );
 }
