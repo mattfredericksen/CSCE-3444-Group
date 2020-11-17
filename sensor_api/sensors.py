@@ -10,9 +10,12 @@ import busio
 from adafruit_mcp9808 import MCP9808
 from adafruit_ads1x15.ads1115 import ADS1115, P0
 from adafruit_ads1x15.analog_in import AnalogIn
+from adafruit_bme280 import Adafruit_BME280_I2C as BME280
 
 
-i2c = busio.I2C(board.SCL, board.SDA)
+# Lower frequency means longer wires can be used
+# with the i2c bus. Default value is 100k.
+i2c = busio.I2C(board.SCL, board.SDA, frequency=10000)
 
 
 class Sensor(Gauge):
@@ -35,17 +38,18 @@ class TemperatureSensor(Sensor):
         self.device = MCP9808(i2c, address=addr)
 
     def read(self):
-        # currently reads Celsius
+        # MCP9808 chip returns temperature in celsius
         return self.device.temperature
 
 
 class PressureSensor(Sensor):
     def __init__(self, addr, name, *args, **kwargs):
         super().__init__(name, *args, **kwargs)
-        self.device = AnalogIn(ADS1115(i2c, address=addr), P0)
+        self.device = BME280(i2c, address=addr)
 
     def read(self):
-        return self.device.value
+        # BME280 chip returns pressure in kPa
+        return self.device.pressure
 
 
 class StateSensor(Sensor):
@@ -54,10 +58,8 @@ class StateSensor(Sensor):
         self.device = AnalogIn(ADS1115(i2c, address=addr), P0)
 
     def read(self):
-        # When system is running, voltage should be ~3.
-        # When system is not running, noise may cause
-        # voltage to rise above 0, but not more than 1
-        return False if self.device.voltage < 1 else True
+        # When system is running, voltage should be < 1.
+        return True if self.device.voltage < 1 else False
 
 
 # Must be defined after class definitions.
@@ -65,8 +67,8 @@ class StateSensor(Sensor):
 device_addr_map = {
     0x18: (TemperatureSensor, ('incoming_air',), {}),
     0x19: (TemperatureSensor, ('outgoing_air',), {}),
-    0x48: (PressureSensor, ('air_pressure',), {}),
-    0x49: (StateSensor, ('is_on',), {}),
+    0x48: (StateSensor, ('is_on',), {}),
+    0x76: (PressureSensor, ('air_pressure',), {})
 }
 
 
