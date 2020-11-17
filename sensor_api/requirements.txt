@@ -7,3 +7,4 @@ requests~=2.24.0
 prometheus_client
 adafruit-circuitpython-mcp9808
 adafruit-circuitpython-ads1x15
+adafruit-circuitpython-bme280
