@@ -1,11 +1,11 @@
-import React, { Component } from "react";
+import React, {Component} from "react";
 import MainPage from "./components/MainPage";
 import LiveView from "./components/LiveView"
 import Historical from "./components/Historical"
 import Settings from "./components/Settings"
 import "./App.css";
 import logo from "./components/global-warming.svg";
-import { BrowserRouter as Router, Route, Switch, Link} from 'react-router-dom';
+import {BrowserRouter as Router, Link, Route, Switch} from 'react-router-dom';
 
 class App extends Component {
     state = { isOpen: false };
@@ -22,7 +22,7 @@ class App extends Component {
                     <div>
                         <div>
                             <nav className="navbar navbar-expand-lg navbar-light">
-                                <style>{"body {background-color:#2C2F33}"}</style>
+                                <style>{"body {background-color:#969696}"}</style>
                                 <style>{"nav {background-color:white"}</style>
                                 <style>{"p {color:white}"}</style>
                                 <img src={logo}
@@ -31,11 +31,10 @@ class App extends Component {
                                      className="d-inline-block align-top"
                                      alt=""
                                      loading="lazy">
-
                                 </img>
-                                <a className="navbar-brand">
-                                    <strong>Temperature Checker</strong>
-                                </a>
+                                <span className="navbar-brand">
+                                    <strong>HVAC Monitor</strong>
+                                </span>
                                 <div>
                                     <Link to ='/'>
                                         <button className="btn m-2">
@@ -53,15 +52,15 @@ class App extends Component {
                                         View
                                     </button>
                                     <div className={openDropdown} aria-labelledby="dropdownButton">
-                                        <Link to ='/Hist'>
-                                            <a className="dropdown-item" href="#">
+                                        <Link to={'/Hist'}>
+                                            <span className="dropdown-item">
                                                 Historical View
-                                            </a>
+                                            </span>
                                         </Link>
-                                        <Link to ='Live'>
-                                            <a className="dropdown-item" href="#">
+                                        <Link to={'Live'}>
+                                            <span className="dropdown-item">
                                                 Live View
-                                            </a>
+                                            </span>
                                         </Link>
                                     </div>
                                 </div>
@@ -74,18 +73,6 @@ class App extends Component {
                                     </Link>
                                 </div>
                             </nav>
-
-                            <p className="fixed-bottom m-2">
-                                Icon made by{" "}
-                                <a href="https://www.flaticon.com/authors/freepik" title="Freepik">
-                                    Freepik
-                                </a>{" "}
-                                from{" "}
-                                <a href="https://www.flaticon.com/" title="Flaticon">
-                                    {" "}
-                                    www.flaticon.com
-                                </a>
-                            </p>
                         </div>
                         <div>
                             <Route path="/" exact component={MainPage} />

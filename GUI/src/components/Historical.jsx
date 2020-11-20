@@ -1,59 +1,74 @@
-import React, { Component } from "react";
+import React, {Component} from "react";
 import moment from "moment";
-import {fetchRangeAggregates} from "./prometheus";
-import {
-    // DatePicker,
-    // TimePicker,
-    DateTimePicker,
-    // MuiPickersUtilsProvider,
-} from '@material-ui/pickers';
+import {Container, Grid, Snackbar} from "@material-ui/core";
+import Alert from '@material-ui/lab/Alert';
+
+import HvacInputGrid from "./HvacInputGrid";
+import HvacDataGrid from "./HvacDataGrid";
 
 class Historical extends Component {
     constructor(props) {
         super(props);
 
         this.state = {
-            isOpen: false,
             startDate: moment(),
             endDate: moment(),
-            error: null,
+            resolution: "1d",
+            duration: "1d",
+            alert: {message: "", severity: "error"},
         };
+
+        this.setState = this.setState.bind(this);
+        this.setAlert = this.setAlert.bind(this);
+        this.closeAlert = this.closeAlert.bind(this);
+}
+
+    setAlert(message="", severity="error") {
+        // call with no arguments to remove alert
+        this.setState({
+            alert: {
+                severity: severity,
+                message: message
+            }
+        });
     }
 
-    setStartDate(date) {
-        // experimental function; check the console log
-        this.setState({startDate: date});
-        fetchRangeAggregates(date, this.state.endDate)
-            .catch(e => {
-                this.setState({error: e})
-            });
-    }
-
-    setEndDate(date) {
-        // experimental function; check the console log
-        this.setState({endDate: date});
-        fetchRangeAggregates(this.state.startDate, date)
-            .catch(e => {
-                this.setState({error: e})
-            });
+    closeAlert(event, reason) {
+        if (reason !== 'clickaway') this.setAlert();
     }
 
     render() {
-        const { isOpen, startDate, endDate, error } = this.state;
-        return(
-            <div>
-                <style>{"h3 {color:white}"}</style>
-                <h3 className="m-2">
-                    Historical
-                </h3>
+        const { startDate, endDate, resolution, duration, alert } = this.state;
 
-                <DateTimePicker
-                    value={startDate}
-                    onChange={(d) => this.setStartDate(d)} />
-                <DateTimePicker
-                    value={endDate}
-                    onChange={(d) => this.setEndDate(d)} />
-            </div>
+        return (
+            <Container maxWidth={"md"}>
+                <Grid container spacing={2} justify={'center'} alignItems={'center'}>
+                    <Grid item xs={8}>
+                        <h3 style={{textAlign: 'center', color: 'white'}}>
+                            {"Historical"}
+                        </h3>
+                    </Grid>
+
+                    <HvacInputGrid
+                        onChange={this.setState} setAlert={this.setAlert}
+                        startDate={startDate} endDate={endDate}
+                    />
+
+                    <Grid item xs={12}>
+                        <HvacDataGrid
+                            startDate={startDate} endDate={endDate}
+                            duration={duration} resolution={resolution}
+                            setAlert={this.setAlert}
+                        />
+                    </Grid>
+                </Grid>
+
+                <Snackbar open={Boolean(alert.message)}>
+                    <Alert severity={alert.severity} onClose={this.closeAlert} variant={'filled'}>
+                        {alert.message}
+                    </Alert>
+                </Snackbar>
+            </Container>
         );
     }
 }
