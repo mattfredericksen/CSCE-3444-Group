@@ -212,7 +212,14 @@ export async function rowsFromQueries(range, offset, duration, resolution) {
                 return [
                     q.name,
                     Object.fromEntries(
-                        await q.execute(range, offset, duration, resolution)
+                        (await q.execute(range, offset, duration, resolution)).map(
+                            // quick fix: when range mode is off, timestamp resolution
+                            // increases to milliseconds, giving unique values to
+                            // metrics collected at the same time. There's probably
+                            // a better way to solve this by checking whether
+                            // range query mode is enabled.
+                            ([ts, value]) => [Math.round(ts), value]
+                        )
                     )
                 ];
             })
