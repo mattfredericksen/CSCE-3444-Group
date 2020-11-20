@@ -3,7 +3,8 @@
 
 import moment from "moment";
 
-const api = "http://localhost:9090/api/v1/query?";
+// address prefix at which Prometheus is running
+const api = "http://dodc:9090/api/v1/query?";
 
 /**
  * A class representing Prometheus queries and facilitating
@@ -75,8 +76,11 @@ class Query {
             return res.data.resultType === "matrix" ? data.values : [data.value];
         } catch {
             console.error("Unable to extract `data.result[0]` from: ", res);
-            // TODO: catch this error somewhere else
-            throw new Error("Unable to extract data from Prometheus's response");
+            if (res.data.result.length === 0) {
+                throw new Error("Prometheus has no data for this time range");
+            } else {
+                throw new Error("Unable to extract data from Prometheus's response");
+            }
         }
     }
 }
