@@ -1,4 +1,4 @@
-import React, { Component } from "react";
+import React, {Component} from "react";
 import moment from "moment";
 import DateTimePicker from "./ConfiguredDateTimePicker";
 import {Container, Grid, Snackbar} from "@material-ui/core";
@@ -28,6 +28,7 @@ class Historical extends Component {
         this.update = this.update.bind(this);
         this.setStartDate = this.setStartDate.bind(this);
         this.setEndDate = this.setEndDate.bind(this);
+        this.setAlert = this.setAlert.bind(this);
         this.closeAlert = this.closeAlert.bind(this);
         this.setRepeatParams = this.setRepeatParams.bind(this);
 
@@ -146,7 +147,7 @@ class Historical extends Component {
                     <Grid item xs={12}>
                         <HvacDataGrid
                             startDate={startDate} endDate={endDate}
-                            {...repeatParams}
+                            errorCallback={this.setAlert} {...repeatParams}
                         />
                     </Grid>
                 </Grid>
