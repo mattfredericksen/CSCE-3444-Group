@@ -30,10 +30,10 @@ class Sensors(Resource):
     def get():
         # TODO: consider making this response JSend compliant
         #       https://github.com/omniti-labs/jsend
-        return [{
-            'name': s._name,
-            'value': s.read() if hasattr(s, 'read') else s.collect()[0].samples[0].value}
-            for s in sensor_list]
+        # Explanation: s.collect() retrieves all data from a sensor.
+        # This data may contain multiple samples. For each of those samples,
+        # return its representation as a dict, making it json serializable
+        return [[c._asdict() for c in s.collect()[0].samples] for s in sensor_list]
 
 
 api.add_resource(Sensors, '/')
