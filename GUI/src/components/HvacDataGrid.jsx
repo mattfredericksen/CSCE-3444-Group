@@ -44,7 +44,7 @@ export default function HvacDataGrid(props) {
     return (
         <div style={{ width: '100%', height: '200px' }}>
             <DataGrid rows={rows} columns={columns} loading={loading}
-                      autoPageSize autoHeight disableExtendRowFullWidth
+                      autoPageSize autoHeight
             />
         </div>
     );

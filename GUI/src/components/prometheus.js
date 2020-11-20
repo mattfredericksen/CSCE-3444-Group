@@ -4,7 +4,7 @@
 import moment from "moment";
 
 // address prefix at which Prometheus is running
-const api = "http://dodc:9090/api/v1/query?";
+const api = "http://bmo:9090/api/v1/query?";
 
 /**
  * A class representing Prometheus queries and facilitating
@@ -174,7 +174,9 @@ export const Queries = [
         "avg_over_time(((incoming_air - outgoing_air) and (is_on == 1))[{r}:15s]{o})",
         {
             width: 135,
-            valueFormatter: ({value}) => `${value.toFixed(2)} \xB0C`
+            valueFormatter: ({value}) => (
+                isNaN(value) ? value : `${value.toFixed(2)} \xB0C`
+            )
         }
     ),
     new Query(
@@ -183,10 +185,12 @@ export const Queries = [
         {
             width: 205,
             valueFormatter: ({value}) => {
-                let d = moment.duration(value, 'seconds');
+                if (isNaN(value)) return value;
+                const d = moment.duration(value, 'seconds');
+                const [m, s] = [d.minutes(), d.seconds()];
                 return (
-                    (d.asMinutes() < 1 ? "" : `${d.minutes()} minutes, `)
-                    + `${d.seconds()} seconds`
+                    (m < 1 ? "" : `${m} minute${m !== 1 ? "s" : ""}, `)
+                    + `${s} second${s !== 1 ? "s" : ""}`
                 );
             }
         }
@@ -205,20 +209,38 @@ export async function rowsFromQueries(range, offset, duration, resolution) {
     const data = await Promise.all(
         Queries.map(
             async (q) => {
-                return [q.name, await q.execute(range, offset, duration, resolution)];
+                return [
+                    q.name,
+                    Object.fromEntries(
+                        await q.execute(range, offset, duration, resolution)
+                    )
+                ];
             })
     )
-    // for every timestamp and index of the first
-    // query result array, create a row object
+
+    // create a sorted array of unique timestamps
+    let timestamps = new Set();
+    for (const [, datum] of data) {
+        for (const timestamp of Object.keys(datum)) {
+            timestamps.add(timestamp);
+        }
+    }
+    timestamps = Array(...timestamps).sort();
+
+    // For every timestamp, create a row object
     // containing that timestamp and the result
-    // of each query at the same index.
-    return data[0][1].map(
-        ([ts,_], i) => ({
+    // of each query at the same timestamp. Results
+    // with missing timestamps are evaluated as NaN.
+    return timestamps.map(
+        (ts, i) => ({
             id: i, Timestamp: ts,
             ...Object.fromEntries(
-                data.map(
-                    ([name, values]) => [name, Number(values[i][1])]
-                )
+                data.map(([name, datum]) => {
+                    const value = Number(datum[ts]);
+                    // NaN must be explicitly converted to "NaN"
+                    // to avoid DataGrid errors.
+                    return [name, isNaN(value) ? "NaN": value];
+                })
             )
         })
     );
