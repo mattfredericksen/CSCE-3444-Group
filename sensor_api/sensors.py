@@ -14,8 +14,8 @@ from adafruit_bme280 import Adafruit_BME280_I2C as BME280
 
 
 # Lower frequency means longer wires can be used
-# with the i2c bus. Default value is 100k.
-i2c = busio.I2C(board.SCL, board.SDA, frequency=10000)
+# with the i2c bus. Default value is 400k.
+i2c = busio.I2C(board.SCL, board.SDA, frequency=1000)
 
 
 class Sensor(Gauge):
@@ -28,7 +28,12 @@ class Sensor(Gauge):
     def collect(self):
         # this override allows sensors to refresh
         # immediately before yielding metrics to Prometheus
-        self.set(self.read())
+        try:
+            self.set(self.read())
+        except Exception as e:
+            print(e, f'Error reading sensor: {self._name}', sep='\n')
+            self.set(float('NaN'))
+
         return super().collect()
 
 
@@ -62,11 +67,17 @@ class StateSensor(Sensor):
         return True if self.device.voltage < 1 else False
 
 
+# TODO: fix floating I2C address bug
+
 # Must be defined after class definitions.
 # Empty dicts in case kwargs need to be added in the future.
 device_addr_map = {
     0x18: (TemperatureSensor, ('incoming_air',), {}),
     0x19: (TemperatureSensor, ('outgoing_air',), {}),
+    # temporary 0x1b due to i2c address floating
+    0x1b: (TemperatureSensor, ('outgoing_air',), {}),
+    # temporary 0x1f due to i2c address floating
+    0x1f: (TemperatureSensor, ('outgoing_air',), {}),
     0x48: (StateSensor, ('is_on',), {}),
     0x76: (PressureSensor, ('air_pressure',), {})
 }
@@ -99,8 +110,9 @@ def get_sensors():
             cls, args, kwargs = device_addr_map[addr]
             sensor_list.append(cls(addr, *args, **kwargs))
 
+    # create
     s = Gauge('outside_air', 'Weather API temperature')
-    s.set_function(lambda: get_weather('76201'))
+    s.set_function(lambda: get_weather('75077'))
     sensor_list.append(s)
 
     return sensor_list

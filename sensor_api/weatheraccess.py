@@ -11,10 +11,9 @@ def get_weather(zipcode):
     url = 'http://api.openweathermap.org/data/2.5/weather'
     app_id = 'f2d40f5cd4f606abecf7872b7a9ebc72'
 
-    response = requests.get(f'{url}?zip={zipcode}&APPID={app_id}')
-
     try:
-        return response.json()['main']['temp']
-    except:
-        print("Error reading weather api response")
-        return None
+        response = requests.get(f'{url}?zip={zipcode}&APPID={app_id}')
+        return round(response.json()['main']['temp'] - 273.15, 3)
+    except Exception as e:
+        print(e, "Error reading weather api response", sep='\n')
+        return float('NaN')
