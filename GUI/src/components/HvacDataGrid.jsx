@@ -18,7 +18,7 @@ const columns = [{
 ];
 
 export default function HvacDataGrid(props) {
-    const { startDate, endDate, duration, resolution, errorCallback } = props;
+    const { startDate, endDate, duration, resolution, setAlert } = props;
 
     const [rows, setRows] = useState([]);
     const [loading, setLoading] = useState(null);
@@ -29,12 +29,16 @@ export default function HvacDataGrid(props) {
 
         setLoading(true);
         rowsFromQueries(range, offset, duration, resolution)
-            .then(setRows)
+            .then(rows => {
+                setRows(rows);
+                setAlert();
+            })
             .catch(error => {
                 setRows([]);
-                errorCallback(error.message);
+                setAlert(error.message);
             })
             .finally(() => setLoading(false));
+    // eslint-disable-next-line
     }, [startDate, endDate, duration, resolution]);
 
     return (
