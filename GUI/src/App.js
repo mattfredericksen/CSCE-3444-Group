@@ -1,11 +1,11 @@
-import React, { Component } from "react";
+import React, {Component} from "react";
 import MainPage from "./components/MainPage";
 import LiveView from "./components/LiveView"
 import Historical from "./components/Historical"
 import Settings from "./components/Settings"
 import "./App.css";
 import logo from "./components/global-warming.svg";
-import { BrowserRouter as Router, Route, Switch, Link} from 'react-router-dom';
+import {BrowserRouter as Router, Link, Route, Switch} from 'react-router-dom';
 
 class App extends Component {
     state = { isOpen: false };
@@ -22,7 +22,7 @@ class App extends Component {
                     <div>
                         <div>
                             <nav className="navbar navbar-expand-lg navbar-light">
-                                <style>{"body {background-color:#696969}"}</style>
+                                <style>{"body {background-color:#969696}"}</style>
                                 <style>{"nav {background-color:white"}</style>
                                 <style>{"p {color:white}"}</style>
                                 <img src={logo}
