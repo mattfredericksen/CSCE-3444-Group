@@ -5,6 +5,7 @@ const timeUnits = ["year", "month", "week", "day"];
 
 export function UnitOfTimeSelect(props) {
     const { plural, ...childProps } = props;
+
     return (
         <TextField
             select fullWidth variant="outlined" margin={'dense'}
@@ -22,9 +23,9 @@ export function UnitOfTimeSelect(props) {
 export function LengthOfTimeInput(props) {
     return (
         <TextField
-            type={'number'} margin={'dense'} fullWidth
-            variant={"outlined"} defaultValue={1}
-            inputProps={{min: 1, pattern: "[0-9]*"}} {...props}
+            type={'number'} margin={'dense'} variant={"outlined"}
+            fullWidth inputProps={{min: 1, pattern: "[0-9]*"}}
+            {...props} value={Math.max(1, props.value)}
         />
     );
 }
