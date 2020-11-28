@@ -1,0 +1,22 @@
+groups:
+  - name: run_state
+    interval: 15s
+    rules:
+    
+    # temporary, triggers when the system turns on
+    - alert: system_on
+      expr: (idelta(is_on[30s:15s]) == 1)
+    
+    # temporary, triggers when the system turns off
+    - alert: system_off
+      expr: (idelta(is_on[30s:15s]) == -1)
+    
+  - name: predictions
+    interval: 1d
+    rules:
+    
+    # Predict the max delta-T in one month (60*60*24*30 seconds)
+    # based on the trend in the daily max over the last 2 weeks.
+    # `< 0` should be changed when the correct threshold is determined. 
+    - alert: predict_failure
+      expr: predict_linear(max_over_time((incoming_air - outgoing_air)[1d:15s])[2w:1d], 60*60*24*30) < 0
