@@ -204,35 +204,32 @@ export const Queries = [
  * @returns {Promise<Object[]>}
  */
 export async function rowsFromQueries(range, offset, duration, resolution) {
-    // get an array of pairs, first item is query name,
-    // second item is array containing query results
-    const data = await Promise.all(
-        Queries.map(
-            async (q) => {
-                return [
-                    q.name,
-                    Object.fromEntries(
-                        (await q.execute(range, offset, duration, resolution)).map(
-                            // quick fix: when range mode is off, timestamp resolution
-                            // increases to milliseconds, giving unique values to
-                            // metrics collected at the same time. There's probably
-                            // a better way to solve this by checking whether
-                            // range query mode is enabled.
-                            ([ts, value]) => [Math.round(ts), value]
-                        )
-                    )
-                ];
-            })
-    )
 
     // create a sorted array of unique timestamps
     let timestamps = new Set();
-    for (const [, datum] of data) {
-        for (const timestamp of Object.keys(datum)) {
-            timestamps.add(timestamp);
-        }
-    }
-    timestamps = Array(...timestamps).sort();
+
+    // get an array of pairs, first item is query name,
+    // second item is array containing query results
+    const data = await Promise.all(
+        Queries.map(async (q) => ([
+            q.name,
+            Object.fromEntries(
+                (await q.execute(range, offset, duration, resolution)).map(
+                    // quick fix: when range mode is off, timestamp resolution
+                    // increases to milliseconds, giving unique values to
+                    // metrics collected at the same time. There's probably
+                    // a better way to solve this by checking whether
+                    // range query mode is enabled.
+                    ([ts, value]) => {
+                        ts = Math.round(ts);
+                        timestamps.add(ts);
+                        return [ts, Number(value)];
+                    }
+                )
+            )
+        ]))
+    )
+    timestamps = [...timestamps].sort();
 
     // For every timestamp, create a row object
     // containing that timestamp and the result
@@ -243,7 +240,7 @@ export async function rowsFromQueries(range, offset, duration, resolution) {
             id: i, Timestamp: ts,
             ...Object.fromEntries(
                 data.map(([name, datum]) => {
-                    const value = Number(datum[ts]);
+                    const value = datum[ts];
                     // NaN must be explicitly converted to "NaN"
                     // to avoid DataGrid errors.
                     return [name, isNaN(value) ? "NaN": value];
