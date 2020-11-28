@@ -14,14 +14,22 @@ function useStateWithEvent(initialState, attribute='value') {
 export default function HvacInputGrid(props) {
     const {onChange, setAlert, startDate, endDate} = props;
 
+    useEffect(() => {
+        if (startDate.isSameOrAfter(endDate)) {
+            setAlert("Start date must be earlier than end date", "info");
+        } else if (endDate.isAfter(moment())) {
+            setAlert("Cannot query the future");
+        }
+    }, [startDate, endDate, setAlert]);
+
+
     // minimum date retrieval only occurs once
     const [minDate, setMinDate] = useState(moment());
     useEffect(() => {
         oldestSample()
             .then(setMinDate)
             .catch(e => setAlert("Unable to retrieve oldest sample", "warning"));
-    // eslint-disable-next-line
-    }, []);
+    }, [setAlert]);
 
     const [enabled, setEnabled] = useStateWithEvent(false, 'checked');
     const [resolution, setResolution] = useStateWithEvent('1');
@@ -38,8 +46,7 @@ export default function HvacInputGrid(props) {
                 `${moment.duration(duration, durUnit).asDays()}d` : null
             )
         });
-    // eslint-disable-next-line
-    }, [enabled, resolution, resUnit, duration, durUnit]);
+    }, [enabled, resolution, resUnit, duration, durUnit, onChange]);
 
     return (
         <>
@@ -69,11 +76,12 @@ export default function HvacInputGrid(props) {
                 labelPlacement="top"
             />
         </Grid>
+
         <Grid container item xs={12} sm={9} spacing={2} justify={'center'}>
             <Grid item xs={5} sm={3}>
                 <LengthOfTimeInput
                     label={"Repeat every"} disabled={!enabled}
-                    onChange={setResolution}
+                    value={resolution} onChange={setResolution}
                 />
             </Grid>
             <Grid item xs={5} sm={3}>
@@ -85,7 +93,7 @@ export default function HvacInputGrid(props) {
             <Grid item xs={5} sm={3}>
                 <LengthOfTimeInput
                     label={"For the last"} disabled={!enabled}
-                    onChange={setDuration}
+                    value={duration} onChange={setDuration}
                 />
             </Grid>
             <Grid item xs={5} sm={3}>
