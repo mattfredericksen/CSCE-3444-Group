@@ -1,51 +1,44 @@
 import React, { Component } from "react";
 
-    const divStyle = {
-        color: 'orange',
-        textAlign: "center",
-    };
+const divStyle = {
+    color: '#ffffff',
+    textAlign: "center",
+};
 
-class Settings extends Component{
+class Settings extends React.Component {
     constructor(props) {
         super(props);
-        this.state = { emailName: 'Enter new email'};
+        this.state = {
+            fname: "",
+            email: ""
+        }
+        this.handleChange = this.handleChange.bind(this);
     }
-    myChangeHandler = (event) => {
-        this.setState({emailName: event.target.value});
+    mySubmitHandler = (event) => {
+        event.preventDefault();
+        alert("You are submitting "+ this.state.fname + " with email " + this.state.email);
     }
-    state = { isOpen: false };
+    handleChange(event) {
+        this.setState({
+            [event.target.name]: event.target.value
+        })
+    }
+
 
     render() {
-        return(
-            <form>
-                <h1 style={divStyle}>
-                    Settings
-                </h1>
-                <h4 style={divStyle}>
-                    Change Email
-                </h4>
-                <h4 style={divStyle}>
-                    Current Email:
-                    <h5 style={divStyle}>
-                        SomeOne@mail.com
-                    </h5>
-                </h4>
-                <h4 style={divStyle}>
-                    New Email:
-                    <input
-                        type="text"
-                        onChange={this.myChangeHandler}
-                    />
-                </h4>
-                <h4 style={divStyle}>
-                    New Email
-                    <h4 style={divStyle}>
-                        {this.state.emailName}
-                    </h4>
-                </h4>
+        return (
+            <form style={divStyle} onSubmit={this.mySubmitHandler}>
+                <h3 style={divStyle}>
+                    Please enter name and email address to add.
+                </h3>
+                <input type="text" name="fname" placeholder="Enter Name" onChange={this.handleChange}/>
+                <br />
+                <input type="text" name="email" placeholder="Enter Email" onChange={this.handleChange}/>
+                <br />
+                <input type="submit" value="Submit"/>
             </form>
         );
     }
 }
-
 export default Settings
+
