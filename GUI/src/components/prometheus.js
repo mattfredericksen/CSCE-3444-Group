@@ -4,7 +4,18 @@
 import moment from "moment";
 
 // address prefix at which Prometheus is running
-const api = "http://bmo:9090/api/v1/query?";
+const api = "http://dodc:9090/api/v1/query?";
+
+
+/**
+ * Convert a moment duration into a Prometheus-compatible duration string.
+ * @param {moment.Duration} dur
+ * @returns {string}
+ */
+function durationString(dur) {
+    return dur ? `${Math.floor(dur.asDays())}d${dur.hours()}h${dur.minutes()}m` : "";
+}
+
 
 /**
  * A class representing Prometheus queries and facilitating
@@ -34,21 +45,28 @@ class Query {
      * Executes the query and returns a Promise
      * containing the extracted result array.
      *
-     * @param {Number=} range, difference between start and end dates
-     * @param {Number=} offset, difference from now to end date
-     * @param {String=} duration, length of time over which to repeat the query
-     * @param {String=} resolution, how often to repeat the query within `duration`
+     * @param {moment.Duration} range, difference between start and end dates
+     * @param {moment.Duration} offset, difference from now to end date
+     * @param {moment.Duration} duration, length of time over which to repeat the query
+     * @param {moment.Duration} resolution, how often to repeat the query within `duration`
      * @returns {Promise<Array[]>}
      */
-    async execute(range=0, offset=0, duration=null, resolution=null) {
-        let query = this.template.replaceAll("{r}", `${range}m`)
-            .replaceAll("{o}", offset > 0 ? ` offset ${offset}m` : "");
+    async execute(range, offset, duration, resolution) {
+        const [rangeStr, offsetStr, durationStr, resolutionStr] = (
+            [...arguments].map(dur => durationString(dur))
+        );
+
+        let query = this.template.replaceAll("{r}", rangeStr);
 
         if (duration && resolution) {
-            query = `(${query})[${duration}:${resolution}]`;
+            query = query.replaceAll("{o}", "");
+            query = `(${query})[${durationStr}:${resolutionStr}]{o}`;
         }
 
-        return this.extract(await fetch(`${api}query=(${query})`));
+        query = query.replaceAll("{o}",
+            offset && offset.minutes() > 0 ? ` offset ${offsetStr}` : "");
+
+        return this.extract(await fetch(`${api}query=(${query})`), offset);
     }
 
     /**
@@ -56,24 +74,31 @@ class Query {
      * the data result arrays.
      *
      * @param response {Response}
-     * @returns {Promise<Array(2)[]>}
+     * @param offset {moment.Duration}
+     * @returns {Promise<Array[]>}
      * @throws when response status is "error"
      *     or when response data is empty.
      */
-    async extract(response) {
+    async extract(response, offset) {
         const res = await response.json();
 
         if (res.status === "error") {
             console.error(res);
-            throw new Error(res.error);
+            throw new Error(`Query failed: ${res.error}`);
         }
+
+        console.log("Query Response Data:\n",
+            {Query: response.url, ...res.data.result});
 
         try {
             const data = res.data.result[0];
             // The result may contain a single Array or an
             // Array of Arrays. This logic ensures the dimensions
             // of the return value are always the same.
-            return res.data.resultType === "matrix" ? data.values : [data.value];
+            if (res.data.resultType === "matrix") return data.values;
+            // manually correct timestamp values stripped during aggregation
+            if (offset) data.value[0] -= offset.asSeconds();
+            return [data.value];
         } catch {
             console.error("Unable to extract `data.result[0]` from: ", res);
             if (res.data.result.length === 0) {
@@ -84,6 +109,7 @@ class Query {
         }
     }
 }
+
 
 /**
  * Returns the time of the oldest sample in the database.
@@ -96,6 +122,7 @@ export async function oldestSample() {
     return moment.unix((await q.execute())[0][1]);
 }
 
+
 export function fetchLive() {
     // This query currently gets all metrics from the
     // "hvac" job, where the `__name__` attribute
@@ -107,6 +134,7 @@ export function fetchLive() {
             .then(res => extractLiveMetrics(res.data.result))
     );
 }
+
 
 function extractLiveMetrics(result) {
     // Extracts metrics with label names for the LiveView
@@ -136,19 +164,6 @@ function extractLiveMetrics(result) {
     return metrics;
 }
 
-/**
- * Given two moments, returns the difference between them
- * and the difference between the latter and right now.
- * @param startDate {Moment}
- * @param endDate {Moment}
- * @returns {{offset: Number, range: Number}}
- */
-export function getRangeOffset(startDate, endDate) {
-    return {
-        range: endDate.diff(startDate, 'minutes'),
-        offset: moment().diff(endDate, 'minutes')
-    };
-}
 
 /**
  * @type {Query[]}
@@ -170,10 +185,10 @@ export const Queries = [
         }
     ),
     new Query(
-        "Average Delta-T",
-        "avg_over_time(((incoming_air - outgoing_air) and (is_on == 1))[{r}:15s]{o})",
+        "Max Delta-T",
+        "max_over_time((incoming_air - outgoing_air)[{r}:15s] {o})",
         {
-            width: 135,
+            width: 115,
             valueFormatter: ({value}) => (
                 isNaN(value) ? value : `${value.toFixed(2)} \xB0C`
             )
@@ -196,6 +211,7 @@ export const Queries = [
         }
     )
 ]
+
 
 /**
  * Generates a list of row objects for loading into `HvacDataGrid`.
@@ -230,6 +246,7 @@ export async function rowsFromQueries(range, offset, duration, resolution) {
         ]))
     )
     timestamps = [...timestamps].sort();
+    console.log("timestamps: ", timestamps);
 
     // For every timestamp, create a row object
     // containing that timestamp and the result
