@@ -1,7 +1,7 @@
 import React, {useEffect, useRef, useState} from "react";
 import moment from "moment";
 import {DataGrid} from "@material-ui/data-grid";
-import {getRangeOffset, Queries, rowsFromQueries} from "./prometheus";
+import {Queries, rowsFromQueries} from "./prometheus";
 
 /**
  * A static array of column definitions for the Data Grid.
@@ -18,15 +18,14 @@ const columns = [{
 ];
 
 export default function HvacDataGrid(props) {
-    const { startDate, endDate, duration, resolution, setAlert } = props;
+    const {range, offset, duration, resolution, setAlert} = props;
 
     const [rows, setRows] = useState([]);
     const [loading, setLoading] = useState(null);
     const queryID = useRef(moment(0));
 
     useEffect(() => {
-        const { range, offset } = getRangeOffset(startDate, endDate);
-        if (range <= 0 || offset < 0) return;
+        if (!range || !offset) return;
 
         setLoading(true);
 
@@ -52,7 +51,7 @@ export default function HvacDataGrid(props) {
                 }
             });
     // eslint-disable-next-line
-    }, [startDate, endDate, duration, resolution]);
+    }, [range, offset, duration, resolution]);
 
     return (
         <div style={{ width: '100%', height: '200px' }}>

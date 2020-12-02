@@ -1,5 +1,4 @@
 import React, {Component} from "react";
-import moment from "moment";
 import {Container, Grid, Snackbar} from "@material-ui/core";
 import Alert from '@material-ui/lab/Alert';
 
@@ -11,8 +10,8 @@ class Historical extends Component {
         super(props);
 
         this.state = {
-            startDate: moment(),
-            endDate: moment(),
+            range: null,
+            offset: null,
             resolution: "1d",
             duration: "1d",
             alert: {message: "", severity: "error"},
@@ -38,7 +37,7 @@ class Historical extends Component {
     }
 
     render() {
-        const { startDate, endDate, resolution, duration, alert } = this.state;
+        const { range, offset, resolution, duration, alert } = this.state;
 
         return (
             <Container maxWidth={"md"}>
@@ -51,12 +50,11 @@ class Historical extends Component {
 
                     <HvacInputGrid
                         onChange={this.setState} setAlert={this.setAlert}
-                        startDate={startDate} endDate={endDate}
                     />
 
                     <Grid item xs={12}>
                         <HvacDataGrid
-                            startDate={startDate} endDate={endDate}
+                            range={range} offset={offset}
                             duration={duration} resolution={resolution}
                             setAlert={this.setAlert}
                         />

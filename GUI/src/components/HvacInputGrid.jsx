@@ -12,14 +12,22 @@ function useStateWithEvent(initialState, attribute='value') {
 }
 
 export default function HvacInputGrid(props) {
-    const {onChange, setAlert, startDate, endDate} = props;
+    const {onChange, setAlert} = props;
+
+    const [startDate, setStartDate] = useState(moment);
+    const [endDate, setEndDate] = useState(startDate);
+    const [startErr, setStartErr] = useState(false);
+    const [endErr, setEndErr] = useState(false);
 
     useEffect(() => {
         if (startDate.isSameOrAfter(endDate)) {
-            setAlert("Start date must be earlier than end date", "info");
-        } else if (endDate.isAfter(moment())) {
+            setAlert("Start date must be earlier than end date");
+            setStartErr(true);
+        } else setStartErr(false);
+        if (endDate.isAfter(moment())) {
             setAlert("Cannot query the future");
-        }
+            setEndErr(true);
+        } else setEndErr(false);
     }, [startDate, endDate, setAlert]);
 
 
@@ -39,27 +47,34 @@ export default function HvacInputGrid(props) {
 
     useEffect(() => {
         onChange({
+            range: (startDate.isBefore(endDate) ?
+                moment.duration(endDate.diff(startDate)) : null
+            ),
+            offset: (endDate.isSameOrBefore(moment()) ?
+                moment.duration(moment().diff(endDate)) : null
+            ),
             resolution: (enabled ?
-                `${moment.duration(resolution, resUnit).asDays()}d` : null
+                moment.duration(resolution, resUnit) : null
             ),
             duration: (enabled ?
-                `${moment.duration(duration, durUnit).asDays()}d` : null
+                moment.duration(duration, durUnit) : null
             )
         });
-    }, [enabled, resolution, resUnit, duration, durUnit, onChange]);
+    }, [onChange, enabled, startDate, endDate,
+        resolution, resUnit, duration, durUnit]);
 
     return (
         <>
         <Grid item xs={9} sm={6}>
             <DateTimePicker
                 label={"Start Date"} value={startDate} minDate={minDate}
-                onChange={d => onChange({startDate: d})}
+                onChange={setStartDate} error={startErr}
             />
         </Grid>
         <Grid item xs={9} sm={6}>
             <DateTimePicker
                 label={"End Date"} value={endDate} minDate={minDate}
-                onChange={d => onChange({endDate: d})}
+                onChange={setEndDate} error={endErr}
             />
         </Grid>
 
