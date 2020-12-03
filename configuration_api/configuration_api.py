@@ -64,7 +64,7 @@ class Configuration(Resource):
                 with open(args.config, 'w') as file:
                     file.write(old_config)
                 return {'error': "Unable to reload AlertManager configuration",
-                        'responseContent': r.content}, r.status_code
+                        'responseContent': str(r.content, r.encoding)}, r.status_code
             return {'email': req_args['email']}
         except Exception as e:
             # restore the previous configuration
