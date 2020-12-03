@@ -1,4 +1,5 @@
-import React, {useCallback, useEffect, useRef, useState} from "react";
+import React, {useCallback, useEffect, useState} from "react";
+import {useStateWithEvent} from "./CustomHooks";
 import axios from 'axios';
 
 const api = "http://dodc:5000/"
@@ -17,31 +18,34 @@ export default function Settings() {
             .catch(error => console.error(error));
     }, []);
 
-    const email = useRef("");
-    const setEmail = useCallback(
-        (event) => email.current = event.target.value,
-        []
-    );
+    const [email, setEmail] = useStateWithEvent("");
 
     const submitHandler = useCallback(
         (event) => {
             event.preventDefault();
-            axios.put(api + 'email/', {email: email.current})
-                .then(res => console.log(res))
-                .catch(e => {
-                    // perform some alerting here
-                    console.error(e);
+            axios.put(api + 'email/', {email: email})
+                .then(({request: {response}}) => {
+                    setEmail({target: {value: ""}});
+                    setPlaceholder(JSON.parse(response)['email']);
+                    alert("Success");
+                })
+                .catch(err => {
+                    console.error(err);
+                    if (err.response) {
+                        alert(JSON.stringify(err.response.data, null, 2))
+                    }
                 });
-        }, []
+        }, [email, setEmail]
     );
 
     return (
         <form style={divStyle} onSubmit={submitHandler}>
             <h3 style={divStyle}>
-                {"Please enter name and email address to add."}
+                {"Enter email for AlertManager configuration."}
             </h3>
             <input type={"email"} name={"email"} onChange={setEmail}
-                   placeholder={placeholder}/>
+                   value={email} placeholder={placeholder}
+                   style={{width: "300px"}}/>
             <br />
             <input type={"submit"} value={"Submit"}/>
         </form>
