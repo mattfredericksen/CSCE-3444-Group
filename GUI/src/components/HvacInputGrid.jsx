@@ -2,14 +2,10 @@ import {FormControlLabel, Grid, Switch} from "@material-ui/core";
 import DateTimePicker from "./ConfiguredDateTimePicker";
 import {LengthOfTimeInput, UnitOfTimeSelect} from "./InputFields";
 import React, {useEffect, useState} from "react";
+import {useStateWithEvent} from "./CustomHooks";
 import {oldestSample} from "./prometheus";
 import moment from "moment";
 
-
-function useStateWithEvent(initialState, attribute='value') {
-    const [state, setState] = useState(initialState);
-    return [state, (event) => setState(event.target[attribute])];
-}
 
 export default function HvacInputGrid(props) {
     const {onChange, setAlert} = props;
