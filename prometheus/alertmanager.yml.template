@@ -1,0 +1,41 @@
+global:
+  resolve_timeout: 5m
+
+route:
+  # The labels by which incoming alerts are grouped together. For example,
+  # multiple alerts coming in for cluster=A and alertname=LatencyHigh would
+  # be batched into a single group.
+  # To aggregate by all possible labels use the special value '...' as the sole label name, for example:
+  # group_by: ['...']
+  # This effectively disables aggregation entirely, passing through all
+  # alerts as-is. This is unlikely to be what you want, unless you have
+  # a very low alert volume or your upstream notification system performs
+  # its own grouping.
+  group_by: ['alertname']
+  
+  # How long to initially wait to send a notification for a group
+  # of alerts. Allows to wait for an inhibiting alert to arrive or collect
+  # more initial alerts for the same group. (Usually ~0s to few minutes.)
+  group_wait: 1s
+
+  # How long to wait before sending a notification about new alerts that
+  # are added to a group of alerts for which an initial notification has
+  # already been sent. (Usually ~5m or more.)
+  group_interval: 1m
+
+  # How long to wait before sending a notification again if it has already
+  # been sent successfully for an alert. (Usually ~3h or more).
+  repeat_interval: 1m
+
+  receiver: 'email'
+
+receivers:
+- name: 'email'
+  email_configs:
+# The email address to send notifications to.
+  - to: {{ email }}
+    from: ACMonitorPrometheus@gmail.com
+    smarthost: smtp.gmail.com:587
+    auth_username: "ACMonitorPrometheus@gmail.com"
+    auth_identity: "ACMonitorPrometheus@gmail.com"
+    auth_password: "wvahyewhsixwxbkf"
