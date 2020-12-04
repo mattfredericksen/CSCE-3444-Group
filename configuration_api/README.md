@@ -6,7 +6,7 @@
 3. Create and activate a [virtual environment](https://docs.python.org/3/library/venv.html)
    using Python 3.7+.
 4. Install [requirements](requirements.txt) (`pip install -r requirements.txt`).
-5. Run [`configuration_api.py`](sensor_api.py).
+5. Run [`configuration_api.py`](configuration_api.py).
 
 ### Note  
 

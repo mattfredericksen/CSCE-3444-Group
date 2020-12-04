@@ -53,7 +53,7 @@ class Query {
      */
     async execute(range, offset, duration, resolution) {
         const [rangeStr, offsetStr, durationStr, resolutionStr] = (
-            [...arguments].map(dur => durationString(dur))
+            [...arguments].map(durationString)
         );
 
         let query = this.template.replaceAll("{r}", rangeStr);
@@ -64,7 +64,7 @@ class Query {
         }
 
         query = query.replaceAll("{o}",
-            offset && offset.minutes() > 0 ? ` offset ${offsetStr}` : "");
+            offset && offset.asMinutes() > 1 ? ` offset ${offsetStr}` : "");
 
         return this.extract(await fetch(`${api}query=(${query})`), offset);
     }
@@ -131,12 +131,12 @@ export function fetchLive() {
     return (
         fetch(api + 'query={job="hvac",__name__!~"(scrape).*"}')
             .then(res => res.json())
-            .then(res => extractLiveMetrics(res.data.result))
+            .then(extractLiveMetrics)
     );
 }
 
 
-function extractLiveMetrics(result) {
+function extractLiveMetrics({data: {result}}) {
     // Extracts metrics with label names for the LiveView
     console.log(result);
     let metrics = result.map(metric => {
@@ -180,9 +180,7 @@ export const Queries = [
     new Query(
         "On/Off Cycle Count",
         "changes(is_on[{r}]{o}) / 2",
-        {
-            width: 160,
-        }
+        {width: 160}
     ),
     new Query(
         "Max Delta-T",
