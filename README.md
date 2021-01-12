@@ -1,8 +1,18 @@
 # The Official Group
 
+This project was completed on 12/07/2020.
+The final report can be seen [here](CSCE_3444_Final_Report.pdf).
+
+### Contributions
+
+![Contributions graphs](contributions.png)
+
+### Project Schedule
 ![Image of Gantt Chart](schedule.jpg)
 
-### Project Proposal (WIP)
+### Project Proposal
+*See [Project Proposal - The Official Group.pdf](Project%20Proposal%20-%20The%20Official%20Group.pdf)*  
+
 **Purpose:** to expose health and usage information of residential air-conditions systems to predict maintenance and failure
 
 **Filter change prediction**  
